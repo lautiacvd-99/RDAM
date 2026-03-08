@@ -75,3 +75,4 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  pdf_storage:
