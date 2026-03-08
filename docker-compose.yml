@@ -1,0 +1,77 @@
+services:
+
+  # ── MySQL ────────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: rdam_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: rdam_db
+      MYSQL_USER: rdam
+      MYSQL_PASSWORD: rdampass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/config/migrate.sql:/docker-entrypoint-initdb.d/migrate.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "rdam", "-prdampass", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: rdam_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Pasarela PlusPagos ───────────────────────────────────────────────────────
+  pasarela:
+    build:
+      context: .
+      dockerfile: Dockerfile.pasarela
+    container_name: rdam_pasarela
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      WEBHOOK_URL: http://backend:3001/v1/pagos/webhook
+
+  # ── Backend Node.js ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rdam_backend
+    restart: on-failure:10
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env.docker
+    volumes:
+      - ./storage/pdfs:/app/storage/pdfs
+      - ./logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      pasarela:
+        condition: service_started
+
+volumes:
+  mysql_data:
+  redis_data:
