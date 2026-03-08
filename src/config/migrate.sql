@@ -33,7 +33,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `auditoria` (
   `id` int(11) NOT NULL,
-  `usuario_id` int(11) NOT NULL,
+  `usuario_id` int(11) DEFAULT NULL,
   `accion` varchar(100) NOT NULL,
   `solicitud_id` int(11) DEFAULT NULL,
   `detalle` text DEFAULT NULL,
@@ -255,9 +255,9 @@ CREATE TABLE `pago` (
   `id` int(11) NOT NULL,
   `solicitud_id` int(11) NOT NULL,
   `transaccion_id` varchar(100) NOT NULL,
-  `estado_pago` enum('PENDIENTE','CONFIRMADO','FALLIDO') NOT NULL DEFAULT 'PENDIENTE',
+  `estado_pago` enum('PENDIENTE','APROBADO','CONFIRMADO','FALLIDO') NOT NULL DEFAULT 'PENDIENTE',
   `monto` decimal(10,2) NOT NULL,
-  `proveedor` varchar(50) NOT NULL,
+  `proveedor` varchar(50) NOT NULL DEFAULT 'pluspagos',
   `metadata_webhook` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata_webhook`)),
   `fecha_pago` datetime DEFAULT NULL,
   `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp()

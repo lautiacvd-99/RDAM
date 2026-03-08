@@ -1,5 +1,25 @@
 services:
 
+  # ── Init: copia el migrate.sql del repo al volumen compartido con MySQL ──────
+  db-init:
+    image: alpine:3.19
+    container_name: rdam_db_init
+    volumes:
+      - mysql_init:/init
+    command: >
+      sh -c "
+        apk add --no-cache git &&
+        if [ ! -f /init/migrate.sql ]; then
+          echo 'Clonando repo...' &&
+          git clone --depth=1 https://github.com/lautiacvd-99/RDAM.git /tmp/rdam &&
+          cp /tmp/rdam/src/config/migrate.sql /init/migrate.sql &&
+          echo 'OK: migrate.sql copiado.'
+        else
+          echo 'migrate.sql ya existe, saltando.'
+        fi
+      "
+    restart: "no"
+
   # ── MySQL ────────────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
@@ -14,13 +34,16 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./src/config/migrate.sql:/docker-entrypoint-initdb.d/migrate.sql
+      - mysql_init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "rdam", "-prdampass", "--silent"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 30s
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
 
   # ── Redis ────────────────────────────────────────────────────────────────────
   redis:
@@ -41,7 +64,15 @@ services:
   pasarela:
     build:
       context: .
-      dockerfile: Dockerfile.pasarela
+      dockerfile_inline: |
+        FROM node:20-alpine
+        RUN apk add --no-cache git
+        WORKDIR /app
+        RUN git clone --depth=1 https://github.com/lautiacvd-99/RDAM.git .
+        WORKDIR /app/pluspagos-mock-simple
+        RUN npm ci --omit=dev
+        EXPOSE 3000
+        CMD ["node", "server.js"]
     container_name: rdam_pasarela
     restart: unless-stopped
     ports:
@@ -50,11 +81,19 @@ services:
       PORT: 3000
       WEBHOOK_URL: http://backend:3001/v1/pagos/webhook
 
-  # ── Backend Node.js ──────────────────────────────────────────────────────────
+  # ── Backend ──────────────────────────────────────────────────────────────────
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile_inline: |
+        FROM node:20-alpine
+        RUN apk add --no-cache git
+        WORKDIR /app
+        RUN git clone --depth=1 https://github.com/lautiacvd-99/RDAM.git .
+        RUN npm ci --omit=dev
+        RUN mkdir -p storage/pdfs logs
+        EXPOSE 3001
+        CMD ["node", "src/app.js"]
     container_name: rdam_backend
     restart: on-failure:10
     ports:
@@ -62,8 +101,7 @@ services:
     env_file:
       - .env.docker
     volumes:
-      - ./storage/pdfs:/app/storage/pdfs
-      - ./logs:/app/logs
+      - pdf_storage:/app/storage/pdfs
     depends_on:
       mysql:
         condition: service_healthy
@@ -76,3 +114,4 @@ volumes:
   mysql_data:
   redis_data:
   pdf_storage:
+  mysql_init:
