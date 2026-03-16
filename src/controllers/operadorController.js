@@ -103,8 +103,8 @@ async function emitirResolucion(req, res, next) {
 
     const nuevoEstado = resultado === 'APROBADO' ? 'APROBADA' : 'RECHAZADA';
 
-    const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-    const url_pdf = `${BACKEND_URL}/storage/pdfs/${archivo.filename}`;
+    const PDF_BASE_URL = process.env.PDF_BASE_URL || 'http://localhost/storage/pdfs';
+    const url_pdf = `${PDF_BASE_URL}/${archivo.filename}`;
 
     const [resResult] = await conn.execute(
       `INSERT INTO resolucion (solicitud_id, usuario_operario_id, resultado, url_pdf, observaciones, fecha_emision)
