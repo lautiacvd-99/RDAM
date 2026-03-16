@@ -9,9 +9,12 @@ const { buildCheckoutHtml, parseWebhookPayload } = require('../services/pluspago
  * Registra intención de pago y devuelve la URL del endpoint de checkout.
  * El frontend navega a checkout_url para que el HTML del form redirija al usuario.
  */
+// Monto institucional del certificado — configurable por variable de entorno
+const MONTO_CERTIFICADO = parseFloat(process.env.MONTO_CERTIFICADO || '2500');
+
 async function iniciarPago(req, res, next) {
   try {
-    const { solicitud_id, monto } = req.body;
+    const { solicitud_id } = req.body;
 
     const [rows] = await pool.execute(
       `SELECT id, estado, email_ciudadano FROM solicitud WHERE id = ? AND email_ciudadano = ?`,
@@ -28,7 +31,7 @@ async function iniciarPago(req, res, next) {
 
     const { transaccionComercioId } = buildCheckoutHtml({
       solicitudId: solicitud_id,
-      montoARS:    monto || 0,
+      montoARS:    MONTO_CERTIFICADO,
       descripcion: `Certificado RDAM - Solicitud #${solicitud_id}`,
     });
 
@@ -36,7 +39,7 @@ async function iniciarPago(req, res, next) {
       `INSERT INTO pago (solicitud_id, transaccion_id, estado_pago, monto, fecha_pago)
        VALUES (?, ?, 'PENDIENTE', ?, NOW())
        ON DUPLICATE KEY UPDATE estado_pago = 'PENDIENTE', fecha_pago = NOW()`,
-      [solicitud_id, transaccionComercioId, monto || 0]
+      [solicitud_id, transaccionComercioId, MONTO_CERTIFICADO]
     );
 
     logger.info(`Pago iniciado: solicitud #${solicitud_id}, txn comercio ${transaccionComercioId}`);
