@@ -25,12 +25,7 @@ CREATE TABLE `auditoria` (
   `fecha` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Log inmutable de acciones del sistema — solo INSERT';
 
--- Solo auditoría relacionada a solicitudes 1 y 2, y logins necesarios
-INSERT INTO `auditoria` (`id`, `usuario_id`, `accion`, `solicitud_id`, `detalle`, `ip_origen`, `fecha`) VALUES
-(1, 4, 'LOGIN', NULL, NULL, '::1', '2026-02-27 15:56:57'),
-(2, 4, 'USUARIO_CREADO', NULL, 'email: operador@rdam.gob.ar, rol: OPERADOR', '::1', '2026-02-27 16:00:11'),
-(3, 5, 'LOGIN', NULL, NULL, '::1', '2026-02-27 16:01:13'),
-(4, 5, 'RESOLUCION_EMITIDA', 1, 'resultado: APROBADO', '::1', '2026-02-27 16:06:12');
+-- auditoria: sin datos iniciales
 
 -- --------------------------------------------------------
 -- Estructura de tabla `historial_estado_solicitud`
@@ -47,14 +42,7 @@ CREATE TABLE `historial_estado_solicitud` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Registro inmutable append-only de transiciones de estado (RN-08)';
 
 -- Historial solo de solicitudes 1 y 2
-INSERT INTO `historial_estado_solicitud` (`id`, `solicitud_id`, `estado_anterior`, `estado_nuevo`, `usuario_id`, `fecha`, `observacion`) VALUES
-(1, 1, NULL, 'PENDIENTE_PAGO', NULL, '2026-02-26 16:12:33', 'Solicitud creada por ciudadano'),
-(2, 1, 'PENDIENTE_PAGO', 'PAGADA', NULL, '2026-02-27 15:35:26', 'Confirmado por PlusPagos. TransaccionPlataformaId: 123456'),
-(3, 1, 'PAGADA', 'PENDIENTE_REVISION', NULL, '2026-02-27 15:35:26', 'Transición automática post-pago'),
-(4, 1, 'PENDIENTE_REVISION', 'EN_REVISION', 5, '2026-02-27 16:04:30', NULL),
-(5, 1, 'EN_REVISION', 'APROBADA', 5, '2026-02-27 16:06:12', 'Documentación verificada correctamente'),
-(6, 1, 'APROBADA', 'CERTIFICADO_EMITIDO', NULL, '2026-02-27 16:08:22', 'PDF generado y almacenado'),
-(7, 2, NULL, 'PENDIENTE_PAGO', NULL, '2026-02-27 16:16:36', 'Solicitud creada por ciudadano');
+-- historial_estado_solicitud: sin datos iniciales
 
 -- --------------------------------------------------------
 -- Estructura de tabla `otp_session`
@@ -88,9 +76,7 @@ CREATE TABLE `pago` (
   `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Transacciones de arancel — idempotencia garantizada por transaccion_id';
 
--- Solo el pago aprobado de la solicitud 1
-INSERT INTO `pago` (`id`, `solicitud_id`, `transaccion_id`, `estado_pago`, `monto`, `proveedor`, `metadata_webhook`, `fecha_pago`, `fecha_creacion`) VALUES
-(1, 1, '123456', 'APROBADO', 2500.00, 'pluspagos', '{"Tipo":"PAGO","TransaccionPlataformaId":"123456","TransaccionComercioId":"RDAM-1-1772219302000","Monto":"2500.00","EstadoId":"3","Estado":"REALIZADA","FechaProcesamiento":"2026-02-27T18:35:26.000Z"}', '2026-02-27 15:35:26', '2026-02-27 15:35:26');
+-- pago: sin datos iniciales
 
 -- --------------------------------------------------------
 -- Estructura de tabla `resolucion`
@@ -106,9 +92,7 @@ CREATE TABLE `resolucion` (
   `fecha_emision` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Resolución 1:1 por solicitud — aprobación o rechazo del operario';
 
--- Solo la resolución de la solicitud 1
-INSERT INTO `resolucion` (`id`, `solicitud_id`, `usuario_operario_id`, `resultado`, `observaciones`, `url_pdf`, `fecha_emision`) VALUES
-(1, 1, 5, 'APROBADO', 'Documentación verificada correctamente', 'http://localhost/storage/pdfs/certificado_1_demo.pdf', '2026-02-27 16:06:12');
+-- resolucion: sin datos iniciales
 
 -- --------------------------------------------------------
 -- Estructura de tabla `solicitud`
@@ -125,9 +109,7 @@ CREATE TABLE `solicitud` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Trámite central: certificado digital de deuda alimenticia';
 
 -- Las 2 primeras solicitudes
-INSERT INTO `solicitud` (`id`, `cuil`, `email_ciudadano`, `ciudad`, `estado`, `operario_asignado_id`, `fecha_creacion`) VALUES
-(1, '20301234567', 'ciudadano@test.com', 'SANTA_FE', 'CERTIFICADO_EMITIDO', NULL, '2026-02-26 16:12:33'),
-(2, '20301234567', 'ciudadano@test.com', 'SANTA_FE', 'PENDIENTE_PAGO', NULL, '2026-02-27 16:16:36');
+-- solicitud: sin datos iniciales
 
 -- --------------------------------------------------------
 -- Estructura de tabla `usuario`
@@ -194,22 +176,22 @@ ALTER TABLE `usuario`
 -- --------------------------------------------------------
 
 ALTER TABLE `auditoria`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 ALTER TABLE `historial_estado_solicitud`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 ALTER TABLE `otp_session`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 ALTER TABLE `pago`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 ALTER TABLE `resolucion`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 ALTER TABLE `solicitud`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 ALTER TABLE `usuario`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
