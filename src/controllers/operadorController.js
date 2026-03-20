@@ -132,8 +132,11 @@ async function emitirResolucion(req, res, next) {
       detalle: `resultado: ${resultado}`,
     });
 
+    // ── Notificación por email al ciudadano ───────────────────────────────────
     if (resultado === 'RECHAZADO') {
       sendSolicitudRechazada(rows[0].email_ciudadano, id, observaciones).catch(logger.error);
+    } else {
+      sendCertificadoDisponible(rows[0].email_ciudadano, id).catch(logger.error); // ← LÍNEA AGREGADA
     }
 
     return res.status(201).json({
