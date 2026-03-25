@@ -63,7 +63,7 @@ async function crearSolicitud(req, res, next) {
 async function getMisSolicitudes(req, res, next) {
   try {
     const [rows] = await pool.execute(
-      `SELECT id, cuil, ciudad, estado, fecha_creacion
+      `SELECT id, cuil, email_ciudadano, ciudad, estado, fecha_creacion
        FROM solicitud
        WHERE email_ciudadano = ?
        ORDER BY fecha_creacion DESC`,
